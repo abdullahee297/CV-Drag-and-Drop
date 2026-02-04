@@ -29,7 +29,24 @@ detector = HandLandmarker.create_from_options(options)
 #-----------Variables--------------
 
 ptime = 0
-box_x, box_y = 40, 40
+cw = 1000
+ch = 600
+color = (255, 0, 255)
+box_x, box_y, wx, hx = 50, 50, 100, 100
+
+
+class DragRect():
+    def __init__ (self, poscenter, size=[100,100]):
+        self.poscenter = poscenter
+        self.size = size
+        
+    def update(self, cursor):
+        box_x, box_y = self.poscenter
+        wx, hx = self.size
+        if (box_x - wx//2 < cursor[0] < box_x + wx//2 and
+            box_y - hx//2 < cursor[1] < box_y + hx//2):
+            self.poscenter = cursor
+
 
 
 # ---------------- Hand Connections ----------------
@@ -44,9 +61,14 @@ HAND_CONNECTIONS = [
 
 
 cap = cv2.VideoCapture(0)
+cap.set(3, cw)
+cap.set(4, ch)
+
+rect = DragRect([150, 150])
 
 while True:
     success, img = cap.read()
+    img = cv2.flip(img, 1)
     if not success:
         break
     
@@ -83,6 +105,9 @@ while True:
 
             for x, y in lm_list:
                 cv2.circle(img, (x, y), 6, (0, 0, 255), -1)
+                
+            if len(lm_list) >= 21:
+                x1, y1 = lm_list[8]
 
             for start, end in HAND_CONNECTIONS:
                 cv2.line(img, lm_list[start], lm_list[end], (0, 255, 0), 2)
@@ -104,21 +129,36 @@ while True:
                     finger_count += 1
                 else: 
                     finger.append(0)
-            print(finger_count, finger)
+            # print(finger_count, finger)
+            cursor = lm_list[8]                
+            
+            if finger[1] and finger [2]:
+                print("Drop")
+                
+            if finger[1] and not finger[2]:
+                rect.update(cursor)                    
+                    # print("Drag")
+
+    box_x, box_y = rect.poscenter
+    wx, hx = rect.size
             
             
-            
-
-
-
     #---------------Text on window----------------
     cv2.rectangle(
         img, 
-        (1000, 1000), 
-        (box_x, box_y), 
-        (0, 255, 255), 
+        (box_x - wx//2, box_y - hx//2),
+        (box_x + wx//2, box_y + hx//2),
+        color, 
         cv2.FILLED
     )
+    
+    # cv2.circle(
+    #     img,
+    #     (cx, cy),
+    #     50,
+    #     (0, 150, 240),
+    #     cv2.FILLED
+    # )
 
     # FPS
     cv2.putText(
