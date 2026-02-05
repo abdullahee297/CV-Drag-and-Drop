@@ -6,6 +6,7 @@
 
 
 import cv2
+import cvzone
 import time
 import mediapipe as mp
 from mediapipe.tasks import python
@@ -39,13 +40,23 @@ class DragRect():
     def __init__ (self, poscenter, size=[100,100]):
         self.poscenter = poscenter
         self.size = size
+        self.default_color = (255, 0, 255)
+        self.hover_color = (0, 255, 0)
+        self.color = self.default_color
         
     def update(self, cursor):
         box_x, box_y = self.poscenter
         wx, hx = self.size
-        if (box_x - wx//2 < cursor[0] < box_x + wx//2 and
-            box_y - hx//2 < cursor[1] < box_y + hx//2):
-            self.poscenter = cursor
+        return (
+            x - w//2 < cursor[0] < x + w//2 and
+            y - h//2 < cursor[1] < y + h//2
+        )
+            
+    def hover(self, cursor):
+        if self.update(cursor):
+            self.color = self.hover_color
+        else:
+            self.color = self.default_color
 
 
 
@@ -64,7 +75,9 @@ cap = cv2.VideoCapture(0)
 cap.set(3, cw)
 cap.set(4, ch)
 
-rect = DragRect([150, 150])
+rectList = []
+for x in range(5):
+    rectList.append(DragRect([x*150 + 150, 150]))
 
 while True:
     success, img = cap.read()
@@ -136,22 +149,29 @@ while True:
                 print("Drop")
                 
             if finger[1] and not finger[2]:
-                rect.update(cursor)
-                colro = (0, 255, 0)                    
+                for rect in rectList:
+                    rect.update(cursor)
+                                        
                     # print("Drag")
 
-    box_x, box_y = rect.poscenter
-    wx, hx = rect.size
-            
+    for rect in rectList:
+        box_x, box_y = rect.poscenter
+        wx, hx = rect.size
+        cv2.rectangle(
+            img, 
+            (box_x - wx//2, box_y - hx//2),
+            (box_x + wx//2, box_y + hx//2),
+            rect.color, 
+            cv2.FILLED
+        )
+        cvzone.cornerRect(
+            img, 
+            (box_x - wx//2, box_y - hx//2, wx, hx),
+            20, 
+            rt = 0
+        )
             
     #---------------Text on window----------------
-    cv2.rectangle(
-        img, 
-        (box_x - wx//2, box_y - hx//2),
-        (box_x + wx//2, box_y + hx//2),
-        color, 
-        cv2.FILLED
-    )
 
     # FPS
     cv2.putText(
