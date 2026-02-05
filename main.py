@@ -40,23 +40,22 @@ class DragRect():
     def __init__ (self, poscenter, size=[100,100]):
         self.poscenter = poscenter
         self.size = size
-        self.default_color = (255, 0, 255)
-        self.hover_color = (0, 255, 0)
-        self.color = self.default_color
+        # self.default_color = (255, 0, 255)
+        # self.hover_color = (0, 255, 0)
+        # self.color = self.default_color
         
     def update(self, cursor):
         box_x, box_y = self.poscenter
         wx, hx = self.size
-        return (
-            x - w//2 < cursor[0] < x + w//2 and
-            y - h//2 < cursor[1] < y + h//2
-        )
+        if (box_x - wx//2 < cursor[0] < box_x + wx//2 and
+            box_y - hx//2 < cursor[1] < box_y + hx//2):
+            self.poscenter = cursor
             
-    def hover(self, cursor):
-        if self.update(cursor):
-            self.color = self.hover_color
-        else:
-            self.color = self.default_color
+    # def hover(self, cursor):
+    #     if self.update(cursor):
+    #         self.color = self.hover_color
+    #     else:
+    #         self.color = self.default_color
 
 
 
@@ -161,7 +160,7 @@ while True:
             img, 
             (box_x - wx//2, box_y - hx//2),
             (box_x + wx//2, box_y + hx//2),
-            rect.color, 
+            color, 
             cv2.FILLED
         )
         cvzone.cornerRect(
